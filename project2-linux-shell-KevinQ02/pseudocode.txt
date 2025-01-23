@@ -1,0 +1,26 @@
+Shell Initialization:
+- Start main loop
+- Display prompt "myshell> "
+
+Input Processing:
+- Read user input
+- Parse the input using the parse function to separate the command and its arguments
+
+Command Execution:
+- If command is "help":
+  - Display help information including available commands (help, exit, pwd, cd)
+- If command is "exit":
+  - Exit the shell
+- If command is "pwd":
+  - Use getcwd to print the current working directory
+- If command is "cd":
+  - If an argument is provided, use chdir to change to the specified directory
+  - If no argument is provided, print an error message
+- If command is not recognized:
+  - Print "Unknown command"
+
+Loop Back:
+- Return to the initial step of displaying the prompt
+
+End of Process:
+- Continuously loop until "exit" command is received, then terminate the process
