@@ -1,0 +1,59 @@
+MUTEXES ← array of pthread_mutex_t [NUM_ROADS] // Mutex for each road
+CONDS ← array of pthread_cond_t [NUM_ROADS]    // Condition variable for each road
+ROAD_CAPACITY ← array of int [NUM_ROADS]       // Tracks cars on each road
+TRAFFIC_STATE ← array of int [NUM_ROADS]       // Tracks light state (GREEN/RED) for each road
+
+FUNCTION main() // Begin main process
+    Initialize MUTEXES and CONDS
+    THREADS ← array of pthread_t [NUM_ROADS + NUM_CARS]  // Threads for cars and traffic lights
+    ROAD_IDS ← array [0, 1, … , NUM_ROADS-1]             // Road identifiers
+    
+    FOR each road_id in ROAD_IDS
+        pthread_create(&THREADS[road_id], NULL, traffic_light_controller, &ROAD_IDS[road_id])
+    
+    FOR i from 0 to NUM_CARS - 1
+        pthread_create(&THREADS[NUM_ROADS + i], NULL, car_behavior, i)
+
+    FOR each THREAD in THREADS
+        pthread_join(THREAD, NULL)
+    
+    FOR each road_id in ROAD_IDS
+        Destroy MUTEXES[road_id] and CONDS[road_id]
+
+FUNCTION traffic_light_controller(road_id) // Traffic Light Logic
+    WHILE True
+        Lock MUTEXES[road_id]
+        TRAFFIC_STATE[road_id] ← GREEN
+        Print "Traffic light on road road_id is GREEN"
+        Broadcast CONDS[road_id] // Notify waiting cars
+        Unlock MUTEXES[road_id]
+        Sleep(GREEN_DURATION)
+
+        Lock MUTEXES[road_id]
+        TRAFFIC_STATE[road_id] ← RED
+        Print "Traffic light on road road_id is RED"
+        Unlock MUTEXES[road_id]
+        Sleep(RED_DURATION)
+
+FUNCTION car_behavior(car_id) // Car Logic
+    WHILE True
+        road_id ← Select Random Road [0, NUM_ROADS-1]
+        Lock MUTEXES[road_id]
+        
+        WHILE TRAFFIC_STATE[road_id] is RED or ROAD_CAPACITY[road_id] ≥ MAX_CAPACITY
+            Wait on CONDS[road_id] with MUTEXES[road_id]
+        
+        ROAD_CAPACITY[road_id] ← ROAD_CAPACITY[road_id] + 1
+        Print "Car car_id entered road road_id"
+        Unlock MUTEXES[road_id]
+        
+        Sleep(random_drive_duration) // Simulate driving time
+        
+        Lock MUTEXES[road_id]
+        ROAD_CAPACITY[road_id] ← ROAD_CAPACITY[road_id] - 1
+        Print "Car car_id left road road_id"
+        Unlock MUTEXES[road_id]
+        
+        Sleep(random_rest_duration) // Simulate wait before attempting again
+
+RETURN
